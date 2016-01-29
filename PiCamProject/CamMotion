@@ -1,0 +1,159 @@
+#Importing modules needed 
+import StringIO, subprocess, os, time,
+ picamera, Image
+
+import io
+from PIL 
+
+
+#Declaring variables
+
+x = 0
+
+y = 0
+
+
+
+#Counts the number of pics have been created and saved
+numOfPics = 0
+
+#Counts the number of groups of 5 pics taken
+numOfFive = 0
+
+
+#count the number of pixels being changed
+pixchange = 0
+
+
+#Number of pixchanges needed to trigger the moving the picture
+sensitivity = 50
+
+
+#Declaring reset to be true for the if reset
+reset = True
+
+
+#Number of pixels need to be different to confirm the change
+confirm_change = 30
+
+
+
+#creating the camera object
+camera = picamera.PiCamera()
+
+
+#runs while true untill broken
+while True:
+
+	
+	# If Reset state ment
+	# when true removes original pic, capture a new one, opens assign when loaded and sets reset value to false
+	if reset == True:
+
+		os.remove("original.jpg")
+
+		camera.capture("original.jpg", resize = (100, 100))
+
+		original = Image.open("original.jpg")
+
+		orig = original.load()
+
+		reset = False
+		print "First Picture Taken"
+
+		time.sleep(2)
+	
+	#During each while loop, takes a new test pic and send pic, open and loads
+	camera.capture("test.jpg", resize = (100, 100))
+
+	camera.capture("TestSend.jpg")
+
+	test = Image.open("test.jpg")
+
+	tes = test.load()
+
+	print "Sencond Picture Taken"
+	
+	#Nested for loops to compare the pictures
+	print "Comparing Pictures"
+	for x in range(100):
+
+		
+
+		#Goes through the y coordinate points then moves to the next row
+
+		for y in range(100):
+
+			#Gets the displacement of the x,y coordinates of the green value
+			pixdiff = abs(orig[x, y][1] - tes[x, y][1])
+
+			
+			#If statement
+			# if pixdifferent is greater than confirm_change incriment pixchange of total pixels changed
+			if pixdiff > confirm_change:
+
+				pixchange += 1
+
+
+			#If Statement
+			# if pixchange (number of total pixels so far that are different) is equal to 
+			#sensitivity (confirm that the picture is different), moves the testsend, and remove test
+			if pixchange == sensitivity :
+
+				numOfPics += 1
+
+				os.rename("TestSend.jpg", "PiCamPicture/TestSend" + str(numOfPics) + ".jpg")
+
+				os.remove("test.jpg")
+
+				pixchange = 0
+
+				reset = True
+
+				break
+
+			
+			#elis Statement
+			# if by the end of the picture the picture is still the same remove the image
+			# and set reset to True
+			elif (pixchange < sensitivity) and (x == 99) and (y == 99):
+
+				os.remove("test.jpg")
+
+				reset = True
+
+		
+		# if is the same again break out of the loop
+		if pixchange == sensitivity:
+
+			break
+
+
+		#if reset is ture break of of the whole for loop
+		if reset:
+
+			break
+
+	#if Statement
+	#if count numOfPics is equal to 5 run shell script to send the mail
+
+	if(numOfPics == 5):
+
+		os.system("bash MotionPicMail")
+
+		numOfPics = 0
+
+		numOfFive += 1
+	
+	#if Statement
+	#if count numOfFive groups have been sent break the entire program
+	if numOfFive == 5:
+
+		break
+
+	
+	#Takes 5 seconds before taking next picture and comparing
+	time.sleep(5)
+
+
+
