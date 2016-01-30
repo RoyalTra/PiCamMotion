@@ -1,0 +1,2 @@
+ #!/bin/bash
+mail -s "Motion Pictures" -a PiCamPicture/TestSend1.jpg -a PiCamPicture/TestSend2.jpg -a PiCamPicture/TestSend3.jpg -a PiCamPicture/TestSend4.jpg -a PiCamPicture/TestSend5.jpg emailaddress < MotionMailBody
