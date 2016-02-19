@@ -1,0 +1,77 @@
+import StringIO, os, time, picamera, io 
+from PIL import Image
+
+def Comparing():
+    xcor = 0
+    ycor = 0
+    diffSensitivity = 30
+    Sensitivity = 50
+    numPixChange = 0
+    Resize("Original.jpg", "ResizedOriginal.jpg")
+    original = LoadFile("ResizedOriginal.jpg")
+    Resize("TestSend.jpg","ResizedTestSend.jpg")
+    test = LoadFile("ResizedTestSend.jpg")
+    print "comparing"
+    for xcor in range(100):
+
+        for ycor in range(100):
+
+            pixdiff = abs(original[xcor, ycor][1] - test[xcor, ycor][1])
+
+            if pixdiff > diffSensitivity:
+	    	print "Pix different"
+                numPixChange += 1
+                    
+            if numPixChange == Sensitivity:
+		os.rename("TestSend.jpg", "CamPictures/TestSend.jpg")
+		os.system("rm Original.jpg")
+                os.rename("ResizedTestSend.jpg", "Original.jpg")
+		print "Inside if Statement"
+                return True
+	     
+    return False
+
+def Capture(Name, width, height):
+        
+    global camera = picamera.PiCamera()
+    try:
+        camera.capture(Name, resize = (width, height))
+	camera.close()
+	print "Picture captured"
+    except OSError:
+        pass
+    return;
+
+def Resize(Name, Resized):
+    image = Image.open(Name)
+    resizedFile = image.resize((100, 100)).save(Resized)
+    return;
+
+def LoadFile(Name):
+    openFile = Image.open(Name)
+    return openFile.load()
+
+def SendPicture():
+    os.system("telegram-cli -W -e \"send_document Travon_Royal /home/pi/Projects/Sensor/CamPictures/TestSend.jpg\"")
+    print "picture sent"
+    return;
+
+def SendMSG(message):
+    os.system("telegram-cli -W -e \"msg Travon_Royal " + message + "\"")
+    return;    
+
+try:
+    Capture("Original.jpg",1024, 768)
+
+    while True:
+    	Capture("TestSend.jpg",1024, 768)
+    
+    	if Comparing():
+            SendMSG("Motion Detected")
+            SendPicture()
+
+except KeyboardInterrupt:
+	camera.close()
+
+
+  
