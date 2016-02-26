@@ -34,6 +34,7 @@ def Comparing():
 def Capture(Name, width, height):
         
     global camera = picamera.PiCamera()
+    camera.led = False
     try:
         camera.capture(Name, resize = (width, height))
 	camera.close()
